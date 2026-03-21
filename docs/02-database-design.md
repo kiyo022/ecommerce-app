@@ -269,7 +269,7 @@ CREATE TABLE product_images (
     image_url VARCHAR(500) NOT NULL,
     alt_text VARCHAR(255),
     display_order INTEGER,
-    reated_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
 );
 
 -- product_reviews(商品レビュー) テーブル
@@ -323,7 +323,7 @@ CREATE TABLE order_items (
 
 -- payments(決済情報)テーブル
 CREATE TABLE payments (
-    payment_id uuid PRIMARY KEY DEFAULT gen_random_id(),
+    payment_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id uuid REFERENCES orders(order_id),
     stripe_payment_intent_id VARCHAR(255) UNIQUE KEY,
     amount DECIMAL(10,2) NOT NULL,
@@ -335,8 +335,6 @@ CREATE TABLE payments (
 ```
 
 ## 設計上の注意点
-
-## 📝 設計上の注意点
 
 1️⃣ **画像管理**
 

@@ -40,9 +40,6 @@ export const useProducts = () => {
 
       if (fetchError) throw fetchError;
       setProducts(data || []);
-
-      // console.log で確認
-      console.log("取得商品数:", data?.length || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "商品取得エラー");
     } finally {

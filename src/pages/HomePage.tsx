@@ -30,7 +30,6 @@ const HomePage: FC = () => {
     startIndex,
     startIndex + itemsPerPage,
   );
-  console.log("商品数:", products.length, "総ページ数:", totalPages);
 
   const categories = ["", "electronics", "clothing", "books", "home"];
   const categoryLabels: { [key: string]: string } = {

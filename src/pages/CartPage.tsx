@@ -15,7 +15,7 @@ const CartPage: FC = () => {
   const getTotalPrice = useCartStore((state) => state.getTotalPrice);
 
   // 商品検索のための関数
-  const handleSeaerch = (term: string) => {
+  const handleSearch = (term: string) => {
     navigate(`/?search=${term}`);
   };
 
@@ -27,7 +27,7 @@ const CartPage: FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ナビゲーションバー */}
-      <Navbar onSearch={handleSeaerch} />
+      <Navbar onSearch={handleSearch} />
 
       {/* メインコンテンツ */}
       <div className="container mx-auto px-4 py-8">

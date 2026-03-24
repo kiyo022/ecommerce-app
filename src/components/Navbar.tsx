@@ -1,4 +1,5 @@
 import { type FC, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../store/cartStore";
 
 interface NavbarProps {
@@ -8,6 +9,7 @@ interface NavbarProps {
 const Navbar: FC<NavbarProps> = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const cartItems = useCartStore((state) => state.items);
+  const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,7 +42,10 @@ const Navbar: FC<NavbarProps> = ({ onSearch }) => {
           <button className="text-gray-600 hover:text-blue-600">
             👤 ログイン
           </button>
-          <button className="relative">
+          <button
+            onClick={() => navigate("/cart")}
+            className="relative hover:opacity-80 transition"
+          >
             <span className="text-2xl">🛒</span>
             {totalItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">

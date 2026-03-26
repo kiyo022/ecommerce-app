@@ -1,5 +1,7 @@
 import { type FC, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { logOut } from "../lib/auth";
 import { useCartStore } from "../store/cartStore";
 
 interface NavbarProps {
@@ -8,6 +10,7 @@ interface NavbarProps {
 
 const Navbar: FC<NavbarProps> = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuth();
   const cartItems = useCartStore((state) => state.items);
   const navigate = useNavigate();
 
@@ -18,6 +21,14 @@ const Navbar: FC<NavbarProps> = ({ onSearch }) => {
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
+  const handleLogout = async () => {
+    try {
+      await logOut();
+      navigate("/");
+    } catch (err) {
+      console.error("ログアウトエラー:", err);
+    }
+  };
   return (
     <nav className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -39,9 +50,32 @@ const Navbar: FC<NavbarProps> = ({ onSearch }) => {
 
         {/* カートアイコン */}
         <div className="flex items-center gap-6">
-          <button className="text-gray-600 hover:text-blue-600">
-            👤 ログイン
-          </button>
+          {user ? (
+            <>
+              <span className="text-sm text-gray-600">{user.email}</span>
+              <button
+                onClick={handleLogout}
+                className="text-gray-600 hover:text-blue-600"
+              >
+                ログアウト
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate("/login")}
+                className="text-gray-600 hover:text-blue-600"
+              >
+                ログイン
+              </button>
+              <button
+                onClick={() => navigate("/signup")}
+                className="text-gray-600 hover:text-blue-600"
+              >
+                登録
+              </button>
+            </>
+          )}
           <button
             onClick={() => navigate("/cart")}
             className="relative hover:opacity-80 transition"

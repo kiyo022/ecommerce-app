@@ -1,6 +1,7 @@
 import { useState, type FC } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../lib/supabase";
 import { useCartStore } from "../store/cartStore";
 
@@ -16,6 +17,7 @@ type PaymentMethod = "credit_card" | "bank_transfer" | "convenience_store";
 const CheckOutPage: FC = () => {
   const navigate = useNavigate();
   const cartItems = useCartStore((state) => state.items);
+  const { user } = useAuth();
   const getTotalPrice = useCartStore((state) => state.getTotalPrice);
   const clearCart = useCartStore((state) => state.clearCart);
 
@@ -85,6 +87,7 @@ const CheckOutPage: FC = () => {
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert({
+          user_id: user?.id || null,
           total_amount: finalPrice,
           status: "pending",
           shipping_address: shippingInfo.address,

@@ -4,12 +4,24 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../lib/supabase";
 import { useCartStore } from "../store/cartStore";
+import {
+  getValidationError,
+  isValidPhoneNumber,
+  isValidPostalCode,
+} from "../utils/validation";
 
 interface ShippingInfo {
   address: string;
   city: string;
   postalCode: string;
   phone: string;
+}
+
+interface ValidationErrors {
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  phone?: string;
 }
 
 type PaymentMethod = "credit_card" | "bank_transfer" | "convenience_store";
@@ -36,6 +48,11 @@ const CheckOutPage: FC = () => {
     phone: "",
   });
 
+  // バリデーションエラー
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {},
+  );
+
   //支払い方法
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("credit_card");
@@ -44,14 +61,82 @@ const CheckOutPage: FC = () => {
   const taxPrice = Math.round(totalPrice * 0.1);
   const finalPrice = totalPrice + taxPrice;
 
-  // ステップ１：配送先情報入力の検証
-  const isShippingValid = () => {
-    return (
-      shippingInfo.address.trim() !== "" &&
-      shippingInfo.city.trim() !== "" &&
-      shippingInfo.postalCode.trim() !== "" &&
-      shippingInfo.phone.trim() !== ""
-    );
+  // フィールド単位のバリデーション
+  const validateField = (field: keyof ShippingInfo, value: string) => {
+    let fieldError: string | null = null;
+
+    if (value.trim() === "") {
+      fieldError = null; // 空は OK（後で全体チェック）
+    } else {
+      switch (field) {
+        case "postalCode":
+          fieldError = getValidationError("郵便番号", value, isValidPostalCode);
+          break;
+        case "phone":
+          fieldError = getValidationError(
+            "電話番号",
+            value,
+            isValidPhoneNumber,
+          );
+          break;
+        case "address":
+          if (value.trim().length < 3) {
+            fieldError = "住所は3文字以上で入力してください";
+          }
+          break;
+        case "city":
+          if (value.trim().length < 2) {
+            fieldError = "市区町村は2文字以上で入力してください";
+          }
+          break;
+      }
+    }
+
+    setValidationErrors((prev) => ({
+      ...prev,
+      [field]: fieldError,
+    }));
+  };
+
+  // 配送先情報の入力ハンドラ
+  const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
+    setShippingInfo({
+      ...shippingInfo,
+      [field]: value,
+    });
+    validateField(field, value);
+  };
+
+  // ステップ1全体の検証
+  const isShippingValid = (): boolean => {
+    const newErrors: ValidationErrors = {};
+
+    if (shippingInfo.address.trim() === "") {
+      newErrors.address = "住所を入力してください";
+    } else if (shippingInfo.address.trim().length < 3) {
+      newErrors.address = "住所は3文字以上で入力してください";
+    }
+
+    if (shippingInfo.city.trim() === "") {
+      newErrors.city = "市区町村を入力してください";
+    } else if (shippingInfo.city.trim().length < 2) {
+      newErrors.city = "市区町村は2文字以上で入力してください";
+    }
+
+    if (shippingInfo.postalCode.trim() === "") {
+      newErrors.postalCode = "郵便番号を入力してください";
+    } else if (!isValidPostalCode(shippingInfo.postalCode)) {
+      newErrors.postalCode = "郵便番号は「123-4567」の形式で入力してください";
+    }
+
+    if (shippingInfo.phone.trim() === "") {
+      newErrors.phone = "電話番号を入力してください";
+    } else if (!isValidPhoneNumber(shippingInfo.phone)) {
+      newErrors.phone = "電話番号は「090-1234-5678」の形式で入力してください";
+    }
+
+    setValidationErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // Step遷移(配送先 → 支払い)
@@ -212,14 +297,20 @@ const CheckOutPage: FC = () => {
                       type="text"
                       value={shippingInfo.address}
                       onChange={(e) =>
-                        setShippingInfo({
-                          ...shippingInfo,
-                          address: e.target.value,
-                        })
+                        handleShippingChange("address", e.target.value)
                       }
                       placeholder="例: 東京都渋谷区1-2-3"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none ${
+                        validationErrors.address
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:border-blue-500"
+                      }`}
                     />
+                    {validationErrors.address && (
+                      <p className="text-red-500 text-sm mt-2">
+                        {validationErrors.address}
+                      </p>
+                    )}
                   </div>
                   {/* 市区町村 */}
                   <div>
@@ -230,14 +321,20 @@ const CheckOutPage: FC = () => {
                       type="text"
                       value={shippingInfo.city}
                       onChange={(e) =>
-                        setShippingInfo({
-                          ...shippingInfo,
-                          city: e.target.value,
-                        })
+                        handleShippingChange("city", e.target.value)
                       }
                       placeholder="例: 東京都"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none ${
+                        validationErrors.city
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:border-blue-500"
+                      }`}
                     />
+                    {validationErrors.city && (
+                      <p className="text-red-500 text-sm mt-2">
+                        {validationErrors.city}
+                      </p>
+                    )}
                   </div>
 
                   {/* 郵便番号 */}
@@ -257,6 +354,11 @@ const CheckOutPage: FC = () => {
                       placeholder="例: 123-4567"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                     />
+                    {validationErrors.postalCode && (
+                      <p className="text-red-500 text-sm mt-2">
+                        {validationErrors.postalCode}
+                      </p>
+                    )}
                   </div>
 
                   {/* 電話番号 */}
@@ -268,14 +370,16 @@ const CheckOutPage: FC = () => {
                       type="tel"
                       value={shippingInfo.phone}
                       onChange={(e) =>
-                        setShippingInfo({
-                          ...shippingInfo,
-                          phone: e.target.value,
-                        })
+                        handleShippingChange("phone", e.target.value)
                       }
                       placeholder="例: 090-1234-5678"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                     />
+                    {validationErrors.phone && (
+                      <p className="text-red-500 text-sm mt-2">
+                        {validationErrors.phone}
+                      </p>
+                    )}
                   </div>
                 </form>
                 {/* ボタン */}

@@ -54,6 +54,12 @@ const Navbar: FC<NavbarProps> = ({ onSearch }) => {
             <>
               <span className="text-sm text-gray-600">{user.email}</span>
               <button
+                onClick={() => navigate("/admin")}
+                className="text-gray-600 hover:text-blue-600 font-semibold"
+              >
+                🔧 管理
+              </button>
+              <button
                 onClick={handleLogout}
                 className="text-gray-600 hover:text-blue-600"
               >

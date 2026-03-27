@@ -1,19 +1,48 @@
-import { type FC, ReactNode } from "react";
+import { FC, ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { supabase } from "../lib/supabase";
 
 interface ProtectedRouteProps {
   children: ReactNode;
   requireAdmin?: boolean;
 }
 
-const ProtectRoute: FC<ProtectedRouteProps> = ({
+const ProtectedRoute: FC<ProtectedRouteProps> = ({
   children,
   requireAdmin = false,
 }) => {
   const { user, loading } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) {
+        setAdminLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("is_admin")
+          .eq("id", user.id)
+          .single();
+
+        if (error) throw error;
+        setIsAdmin(data?.is_admin || false);
+      } catch {
+        setIsAdmin(false);
+      } finally {
+        setAdminLoading(false);
+      }
+    };
+
+    checkAdmin();
+  }, [user]);
+
+  if (loading || adminLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         読み込み中...
@@ -25,12 +54,11 @@ const ProtectRoute: FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  if (requireAdmin) {
-    //TODO: 後で管理者判定を追加
-    return <>{children}</>;
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 };
 
-export default ProtectRoute;
+export default ProtectedRoute;

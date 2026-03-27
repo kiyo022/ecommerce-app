@@ -35,10 +35,11 @@ const App: FC = () => {
           <Route path="/signup" element={<SignupPage />} />
 
           {/* 管理者向けルート */}
+          {/* 管理者向けルート */}
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -46,7 +47,7 @@ const App: FC = () => {
           <Route
             path="/admin/products"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <AdminProducts />
               </ProtectedRoute>
             }
@@ -54,7 +55,7 @@ const App: FC = () => {
           <Route
             path="/admin/order/:orderId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <AdminOrderDetail />
               </ProtectedRoute>
             }

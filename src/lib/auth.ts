@@ -48,3 +48,19 @@ export const onAuthStateChange = (
 
   return data.subscription;
 };
+
+// 管理者かどうかを確認
+export const isAdmin = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select("is_admin")
+      .eq("id", userId)
+      .single();
+
+    if (error) return false;
+    return data?.is_admin || false;
+  } catch {
+    return false;
+  }
+};

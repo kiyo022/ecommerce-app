@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { login } from "../lib/auth";
+import { isValidEmail } from "../utils/validation";
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -9,6 +10,17 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const validateEmail = (value: string) => {
+    if (value.trim() === "") {
+      setEmailError(null);
+    } else if (!isValidEmail(value)) {
+      setEmailError("正しいメールアドレスを入力してください");
+    } else {
+      setEmailError(null);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,10 +28,27 @@ export const LoginPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
+      if (!email || !password) {
+        setError("メールアドレスとパスワードを入力してください");
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        setError("正しいメールアドレスを入力してください");
+        return;
+      }
+
       await login(email, password);
       navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "ログインに失敗しました");
+      const errorMessage =
+        err instanceof Error &&
+        err.message.includes("Invalid login credentials")
+          ? "メールアドレスまたはパスワードが正しくありません"
+          : err instanceof Error
+            ? err.message
+            : "ログインに失敗しました";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -60,11 +89,21 @@ export const LoginPage: React.FC = () => {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                validateEmail(e.target.value);
+              }}
               placeholder="example@example.com"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none ${
+                emailError
+                  ? "border-red-500 focus:border-red-500"
+                  : "border-gray-300 focus:border-blue-500"
+              }`}
             />
+            {emailError && (
+              <p className="text-red-500 text-sm mt-2">{emailError}</p>
+            )}
           </div>
           {/* パスワード */}
           <div>
